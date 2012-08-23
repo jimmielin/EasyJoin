@@ -12,10 +12,11 @@ class EasyJoinAppModel extends Model {
  * @static
  * @param string $association
  * @param bool|array $conditions
+ * @param bool $assocAlias
  * @return array
  */
-	public static function joinLeft($association, $conditions = true) {
-		return self::_join($association, $conditions, 'LEFT');
+	public static function joinLeft($association, $conditions = true, $assocAlias = true) {
+		return self::_join($association, $conditions, 'LEFT', $assocAlias);
 	}
 
 /**
@@ -25,9 +26,10 @@ class EasyJoinAppModel extends Model {
  * @static
  * @param string $association
  * @param bool|array $conditions
+ * @param bool $assocAlias
  * @return array
  */
-	public static function joinInner($association, $conditions = true) {
+	public static function joinInner($association, $conditions = true, $assocAlias = true) {
 		return self::_join($association, $conditions, 'INNER');
 	}
 
@@ -40,7 +42,7 @@ class EasyJoinAppModel extends Model {
  * @param string $type
  * @return array
  */
-	protected static function _join($association, $conditions, $type) {
+	protected static function _join($association, $conditions, $type, $assocAlias = true) {
 		if ($conditions === true) {
 			$model = get_called_class();
 			$obj = ClassRegistry::getObject($model);
@@ -61,11 +63,16 @@ class EasyJoinAppModel extends Model {
 				$joinModel = $association;
 				$foreignKey = $obj->hasMany[$association]['foreignKey'];
 			}
-			$conditions = sprintf('%s.id = %s.%s', $primaryModel, $joinModel, $foreignKey);
+			if($assocAlias) {
+				$conditions = sprintf('%s.id = %s2.%s', $primaryModel, $joinModel, $foreignKey);
+			}
+			else {
+				$conditions = sprintf('%s2.id = %s.%s', $primaryModel, $joinModel, $foreignKey);
+			}
 		}
 		return array(
 			'table' => Inflector::tableize($association),
-			'alias' => $association,
+			'alias' => $association . "2",
 			'type' => $type,
 			'foreignKey' => false,
 			'conditions' => $conditions

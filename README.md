@@ -1,11 +1,18 @@
-EasyJoin
+EasyJoin (Aliased Version)
 ========
-
 CakePHP plugin - Easily create joins for your associated models.
 
 EasyJoin makes using ad-hoc joins simple and quick. No longer do you have to deal with unbinding/bindings model on-the-fly or writing `join` arrays to force Cake to use joins instead of doing multiple queries. EasyJoin will automatically detect the relationship between model and create joins array for you. 
 
-# Requirments
+This variant of `EasyJoin` contains a small hack for allowing EasyJoin to work with Containable. It only requires a small change in the code and nothing else.
+
+# Credits
+
+EasyJoin is made with the awesome work by Tigrang in [http://github.com/tigrang/EasyJoin](http://github.com/tigrang/EasyJoin).
+
+EasyJoin was inspired by the article "[Restoring elegance to CakePHP — doing multiple joins The Right Way™](http://cfc.kizzx2.com/index.php/restoring-elegance-to-cakephp-doing-multiple-joins-the-right-way/)"
+
+# Requirements
 * PHP >= 5.3.0
 * CakePHP >= 2.0
 
@@ -13,24 +20,10 @@ EasyJoin makes using ad-hoc joins simple and quick. No longer do you have to dea
 
 _[Manual]_
 
-1. Download this: [http://github.com/tigrang/EasyJoin/zipball/master](http://github.com/tigrang/EasyJoin/zipball/master).
+1. Download this plugin with the "ZIP" option above.
 2. Unzip
 3. Copy the resulting folder to `app/Plugin`
 4. Rename the folder to `EasyJoin`
-
-_[GIT Submodule]_
-
-In your app directory run:
-
-	git submodule add https://github.com/tigrang/EasyJoin.git Plugin/EasyJoin
-	git submodule init
-	git submodule update
-
-_[GIT Clone]_
-
-In your plugin directory run:
-
-	git clone https://github.com/tigrang/EasyJoin.git
 
 ## Usage
 
@@ -38,24 +31,30 @@ In your plugin directory run:
 
 	App::uses('EasyJoinAppModel', 'EasyJoin.Model');
 	class AppModel extends EasyJoinAppModel {
+
 	}
 
-### Example
+### Example (Model Code)
 
-	public function findBySubscriber($id) {
-		App::uses('Course', 'Model');
+	public function findByCategoryRoot($id) { // belongs in "User" model, for example purposes
 		return $this->find('all', array(
-			'conditions' => array('Subscription.subscriber_id' => $id),
+			'conditions' => array('Category2.root_id' => $id),
 			'joins' => array(
-				self::joinLeft('Subscription'),
-				self::joinLeft('Course'),
-				self::joinLeft('Professor'),
-				Course::joinLeft('Department'),
-				Course::joinLeft('Client'),
+				self::joinLeft("Parent", true, false),
+				Parent::joinLeft("SecondParent"),
+				SecondParent::joinLeft("Category")
 			),
+			'contain' => array(
+				'Parent' => array(
+					'SecondParent' => array(
+						'Category'
+					)
+				)
+			)
 		));
 	}
 
-# Credits
+For the first model, specify the third parameter with `false` so it does not use aliases for `User.parent_id = Parent2.id`
 
-EasyJoin was inspired by the article "[Restoring elegance to CakePHP — doing multiple joins The Right Way™](http://cfc.kizzx2.com/index.php/restoring-elegance-to-cakephp-doing-multiple-joins-the-right-way/)"
+Any conditions specified on the joined Models should follow with a `2`, like `Category2`, `Parent2`, `SecondParent2`.
+This is to avoid conflicts with the `Containable` behavior.
